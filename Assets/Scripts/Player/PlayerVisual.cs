@@ -9,15 +9,22 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField] private PlayerScriptable playerScriptable;
     private GameObject visual;
     private Animator anim;
+    public VisualType visualType { get; private set; }
 
     void Start()
     {
-        ChangeVisual("Visual1");
+        ChangeVisual(visualType.ToString());
+    }
+
+    public void Init(VisualType visualType)
+    {
+        this.visualType = visualType;
     }
     
     public void ChangeVisual(string str)
     {
         VisualType type = (VisualType)Enum.Parse(typeof(VisualType), str);
+        visualType = type;
         foreach(PlayerVisualData data in playerScriptable.listVisual)
         {
             if(type == data.visualType)

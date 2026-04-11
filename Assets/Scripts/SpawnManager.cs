@@ -15,7 +15,7 @@ public class SpawnManager : MonoBehaviour
     private List<Vector3> spawnPos = new List<Vector3>();
     private new Collider collider;
 
-    [SerializeField] private Pool Pool;
+    private Pool Pool;
 
     void Start()
     {
@@ -44,16 +44,12 @@ public class SpawnManager : MonoBehaviour
 
     void SpawnSingleItem()
     {
-        // item.position = FindSpawnPos();
-        // item.rotation = Quaternion.identity;
-        //item.GetComponent<Item>().Init();
-
         Pool = PoolKit.GetPool("MAIN");
         ItemScriptable itemData = itemScriptables[Random.Range(0, itemScriptables.Length)];
         Transform item = Pool.Spawn(itemData.itemName);
         item.transform.position = FindSpawnPos();
         ItemStyleEntry entry = new ItemStyleEntry(itemData, itemData.GetRandomVisual());
-        item.GetComponent<Item>().Init(itemData.ID, itemData.itemName, itemData.GetRarity(), itemData.GetMaterial(entry.styleVisual.style));
+        item.GetComponent<Item>().Init(itemData.level, itemData.itemName, itemData.GetRarity(), entry.styleVisual.style, itemData.GetMaterial(entry.styleVisual.style), false);
     }
 
     Vector3 FindSpawnPos()
@@ -61,6 +57,7 @@ public class SpawnManager : MonoBehaviour
         float x = Random.Range(minSpawnPos.x, maxSpawnPos.x);
         float z = Random.Range(minSpawnPos.y, maxSpawnPos.y);
         return new Vector3(x, transform.position.y, z);
+        
     }
 
     // Vector3 FindSpawnPos()

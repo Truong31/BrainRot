@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1e260e5fc477eb41ae7cc2bbf1395ba, type: 3}
   m_Name: CapsuleData
   m_EditorClassIdentifier: 
-  ID: 1
+  level: 1
   itemName: Capsule
   rarity: 0
   style: 0
-  prefab: {fileID: 8442557792780690599, guid: 4d6946ea642c81e4bba2259f6c5e29ba, type: 3}
   visuals:
   - style: 0
     material: {fileID: 2100000, guid: 4daceeda07942f04a9595da82e70a03f, type: 2}

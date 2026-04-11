@@ -11,15 +11,13 @@ public class ItemScriptable : ScriptableObject
 {
 #region Data
     [BoxGroup("Data")]
-    public int ID;
+    public int level;
     [BoxGroup("Data")]
     public string itemName;
     [BoxGroup("Data")]
     public I_Rarity rarity;
     [BoxGroup("Data")]
     public I_Style style;
-    [BoxGroup("Data")]
-    public GameObject prefab;
 #endregion
 
 #region  Visual
@@ -79,4 +77,14 @@ public class IncomeStats
     public int cashPerSecond;
     public int baseIncome;
     public int upgradeCost;
+}
+
+[Serializable]
+public class ItemData
+{
+    public int level;
+    public string itemName;
+    public I_Rarity rarity;
+    public I_Style style;
+    public Material material;
 }

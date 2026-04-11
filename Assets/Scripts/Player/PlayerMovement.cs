@@ -10,9 +10,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] PlayerAnim anim;
     [Header("Movement")]
     [SerializeField] FixedJoystick joystick;
-    [SerializeField] Transform visual;
-    [SerializeField] float speed = 5f;
-    [SerializeField] float jumpForce = 5f;
+    public float speed { get; private set; } = 5f;
+    public float jumpForce { get; private set; } = 5f;
     private Vector3 direction;
     private CharacterController characterController;
 
@@ -25,6 +24,12 @@ public class PlayerMovement : MonoBehaviour
     private float vertical;
 
     private Camera main;
+
+    public void Init(float speed, float jumpForce)
+    {
+        this.speed = speed;
+        this.jumpForce = jumpForce;
+    }
 
     public void Start()
     {
@@ -52,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
         
         if(direction.normalized.magnitude > 0.1f)
         {
-            visual.transform.rotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.LookRotation(direction);
         }
         
         if(!isGrounded) velocityY += gravity * Time.deltaTime;
@@ -77,7 +82,6 @@ public class PlayerMovement : MonoBehaviour
         if(jumpCount > 0)
         {
             jumpCount--;
-            isGrounded = false;
             anim.PlayJumpAnim();
             velocityY = jumpForce;
         }

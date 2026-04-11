@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1e260e5fc477eb41ae7cc2bbf1395ba, type: 3}
   m_Name: SphereData
   m_EditorClassIdentifier: 
-  ID: 3
+  level: 1
   itemName: Sphere
   rarity: 0
   style: 0
-  prefab: {fileID: 4374645926920871038, guid: 450242a1d490a1946987b4e4968dfac2, type: 3}
   visuals:
   - style: 0
     material: {fileID: 2100000, guid: 4daceeda07942f04a9595da82e70a03f, type: 2}

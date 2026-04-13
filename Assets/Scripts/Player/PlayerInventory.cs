@@ -1,58 +1,55 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using HellTap.PoolKit;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerInventory : MonoBehaviour
 {
+    public static Action SpawnNewItem;
+    
+    [SerializeField] Button getItemBtn;
     public int totalSlots { get; private set; } = 3;
-    public List<ItemData> totalItems { get; private set; } = new List<ItemData>();
-    public ItemData grabbedItem { get; private set; }
+    
+    public List<ItemInstance> totalItems { get; private set; } = new List<ItemInstance>();
+    public ItemInstance grabbedItem { get; private set; }
+    
     private int currentSlots = 0;
-    private GameObject waitObj;
-    [SerializeField] private Transform pickedObj;
+    
+    private Item waitItem; 
+    
+    public Transform grabbedItemPos;
+    public Transform pickedObj { get; private set; }
 
-    public void Init(int totalSlots, List<ItemData> list, ItemData itemData)
+    public void Init(int totalSlots, List<ItemInstance> list, ItemInstance grabbedItem)
     {
         this.totalSlots = totalSlots;
-        totalItems = list;
-        grabbedItem = itemData;
-        
-        if(pickedObj == null)
+        this.totalItems = list ?? new List<ItemInstance>();
+        this.grabbedItem = grabbedItem;
+        GetItem();
+    }
+
+    void Start()
+    {
+        getItemBtn.onClick.AddListener(GetItem);
+    }
+
+    void OnDisable()
+    {
+        getItemBtn.onClick.RemoveListener(GetItem);
+    }
+
+    void GetItem()
+    {
+        if(grabbedItem == null || grabbedItem.itemData == null)
         {
-            Debug.LogError("PlayerInventory: pickedObj is not assigned in the Inspector!");
-            return;
+            if(totalItems.Count == 0) return;
+            grabbedItem = totalItems[0];
         }
-        
-        if(pickedObj.childCount == 0 && grabbedItem != null)
+
+        if(grabbedItem != null && grabbedItem.itemData != null && grabbedItemPos != null)
         {
-            Pool pool = PoolKit.GetPool("MAIN");
-            if(pool == null)
-            {
-                Debug.LogError("PlayerInventory: Failed to get MAIN pool from PoolKit!");
-                return;
-            }
-            
-            Debug.Log(grabbedItem.itemName);
-            Transform obj = pool.Spawn(grabbedItem.itemName);
-            if(obj == null)
-            {
-                Debug.LogError($"PlayerInventory: Failed to spawn item {grabbedItem.itemName}!");
-                return;
-            }
-            
-            obj.parent = pickedObj;
-            obj.localPosition = Vector3.zero;
-            obj.rotation = Quaternion.identity;
-            Item itemComponent = obj.GetComponent<Item>();
-            if(itemComponent != null)
-            {
-                itemComponent.Init(grabbedItem.level, grabbedItem.itemName, grabbedItem.rarity, grabbedItem.style, grabbedItem.material, true);
-            }
-            else
-            {
-                Debug.LogError($"PlayerInventory: Spawned item {grabbedItem.itemName} doesn't have Item component!");
-            }
+            GetItemModel(grabbedItem, grabbedItemPos);
         }
     }
 
@@ -63,72 +60,95 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log("Out of Slot");
             return;
         }
-        if(waitObj != null && currentSlots < totalSlots)
+
+        if(waitItem != null && currentSlots < totalSlots)
         {
             Debug.Log("Grab obj success");
-            currentSlots++;
-
-            ItemData item = new ItemData();
-            Item i = waitObj.GetComponent<Item>();
-            if(i == null)
-            {
-                Debug.LogError("GrabObject: waitObj doesn't have Item component!");
-                return;
-            }
-
-            item.level = i.level;
-            item.itemName = i.name;
-            item.rarity = i.rarity;
-            item.style = i.style;
-            item.material = i.material;
-            totalItems.Add(item);
-            i.BeingGrabbed();
-
-            if(pickedObj == null)
-            {
-                Debug.LogError("GrabObject: pickedObj is null!");
-                return;
-            }
-
-            if(pickedObj.childCount == 0)
-            {
-                grabbedItem = item;
-                waitObj.transform.parent = pickedObj;
-                waitObj.transform.localPosition = Vector3.zero;
-                waitObj.transform.rotation = Quaternion.identity;
-                waitObj = null;
-            }
-            else
-            {
-                Despawner despawner = waitObj.GetComponent<Despawner>();
-                if(despawner != null)
-                {
-                    despawner.Despawn();
-                }
-                else
-                {
-                    Debug.LogError("GrabObject: waitObj doesn't have Despawner component!");
-                }
-            }
+            
+            ItemInstance grabbedInstance = waitItem.myInstance; 
+            
+            AddItem(grabbedInstance);
+            PoolKit.GetPool("MAIN").Despawn(waitItem.transform);
+            waitItem = null; 
+            
+            SpawnNewItem?.Invoke();
         }
+    }
+
+    public void RemoveItem()
+    {
+        if (grabbedItem == null) return;
+
+        currentSlots--;
+        
+        if (totalItems.Contains(grabbedItem))
+        {
+            totalItems.Remove(grabbedItem);
+        }
+
+        if (pickedObj != null)
+        {
+            PoolKit.GetPool("MAIN").Despawn(pickedObj);
+            pickedObj = null;
+        }
+        
+        grabbedItem = null;
+    }
+
+    public void AddItem(ItemInstance itemInstance) 
+    {
+        currentSlots++;
+        totalItems.Add(itemInstance);
+        
+        if(grabbedItem == null)
+        {
+            grabbedItem = itemInstance;
+            GetItemModel(grabbedItem, grabbedItemPos);
+        }
+    }
+
+    void GetItemModel(ItemInstance instance, Transform parent)
+    {
+        if(instance == null || instance.itemData == null || string.IsNullOrEmpty(instance.itemData.itemName)) return;
+
+        pickedObj = PoolKit.GetPool("MAIN").Spawn(instance.itemData.itemName);
+
+        MeshRenderer renderer = pickedObj.GetComponent<MeshRenderer>();
+        
+        if(renderer != null)
+        {
+            renderer.material = instance.GetMat(); 
+        }
+        
+        pickedObj.SetParent(parent);
+        pickedObj.localPosition = Vector3.zero;
+        pickedObj.localRotation = Quaternion.identity;
     }
     
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Item"))
         {
-            Debug.Log("Find Item");
-            if(waitObj == null)
-                waitObj = other.gameObject;
+            Item itemComponent = other.GetComponent<Item>();
+            if (itemComponent != null)
+            {
+                Debug.Log("Find Item");
+                if(waitItem == null)
+                    waitItem = itemComponent;
+            }
         }
     }
+    
     void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Item"))
         {
-            Debug.Log("Cancel Item");
-            if(waitObj != null) waitObj = null;
+            Item itemComponent = other.GetComponent<Item>();
+            if (itemComponent != null && waitItem == itemComponent)
+            {
+                Debug.Log("Cancel Item");
+                waitItem = null;
+            }
         }
     }
-
 }

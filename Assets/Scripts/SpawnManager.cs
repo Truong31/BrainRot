@@ -1,10 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using HellTap.PoolKit;
 using UnityEngine;
 
 public class SpawnManager : MonoBehaviour
 {
-    [SerializeField] ItemScriptable[] itemScriptables;
     [SerializeField] int totalSpawn;
     private Vector2 maxSpawnPos;
     private Vector2 minSpawnPos;
@@ -15,14 +15,18 @@ public class SpawnManager : MonoBehaviour
     private List<Vector3> spawnPos = new List<Vector3>();
     private new Collider collider;
 
-    private Pool Pool;
-
     void Start()
     {
         collider = GetComponent<Collider>();
         SpawnArea();
         InitSpawn();
         Item.disappear += SpawnSingleItem;
+        PlayerInventory.SpawnNewItem += SpawnSingleItem;
+    }
+
+    void OnDisable()
+    {
+        PlayerInventory.SpawnNewItem -= SpawnSingleItem;
     }
 
     void SpawnArea()
@@ -44,12 +48,16 @@ public class SpawnManager : MonoBehaviour
 
     void SpawnSingleItem()
     {
-        Pool = PoolKit.GetPool("MAIN");
-        ItemScriptable itemData = itemScriptables[Random.Range(0, itemScriptables.Length)];
-        Transform item = Pool.Spawn(itemData.itemName);
+        ItemData itemData = GameData.instance.listItem[Random.Range(0, GameData.instance.listItem.Count)];
+        Transform model = PoolKit.GetPool("MAIN").Spawn(itemData.itemName);
+        Transform item = PoolKit.GetPool("MAIN").Spawn("Item");
         item.transform.position = FindSpawnPos();
-        ItemStyleEntry entry = new ItemStyleEntry(itemData, itemData.GetRandomVisual());
-        item.GetComponent<Item>().Init(itemData.level, itemData.itemName, itemData.GetRarity(), entry.styleVisual.style, itemData.GetMaterial(entry.styleVisual.style), false);
+
+        int level = Random.Range(1, 4);
+        I_Style style = itemData.GetRandomVisual().style;
+        ItemInstance newInstance = new ItemInstance(itemData, level, style);
+
+        item.GetComponent<Item>().Init(newInstance, newInstance.GetMat(), model);
     }
 
     Vector3 FindSpawnPos()

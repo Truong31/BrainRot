@@ -6,7 +6,6 @@ using UnityEngine;
 public class PlayerVisual : MonoBehaviour
 {
     [SerializeField] private PlayerAnim playerAnim;
-    [SerializeField] private PlayerScriptable playerScriptable;
     private GameObject visual;
     private Animator anim;
     public VisualType visualType { get; private set; }
@@ -25,7 +24,7 @@ public class PlayerVisual : MonoBehaviour
     {
         VisualType type = (VisualType)Enum.Parse(typeof(VisualType), str);
         visualType = type;
-        foreach(PlayerVisualData data in playerScriptable.listVisual)
+        foreach(PlayerVisualData data in GameData.instance.playerScriptable.listVisual)
         {
             if(type == data.visualType)
             {
